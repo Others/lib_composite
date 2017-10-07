@@ -1,6 +1,6 @@
 [package]
 name = "lib_composite"
-version = "0.5.0"
+version = "0.6.0"
 authors = ["Gregor Peach <gregorpeach@gmail.com>"]
 license = "MIT"
 

@@ -1,6 +1,6 @@
 use libc::{c_int, c_uint, c_void};
 
-use super::types::{cycles_t, microsec_t, tcap_prio_t, thdcap_t, thdid_t};
+use super::types::{cycles_t, microsec_t, tcap_prio_t, thdcap_t, thdid_t, tcap_t, asndcap_t, arcvcap_t, tcap_res_t};
 
 #[repr(C)]
 #[derive(Clone, Debug)]
@@ -17,18 +17,42 @@ pub enum sl_thd_state{
 #[repr(C)]
 #[derive(Clone, Debug)]
 #[allow(non_camel_case_types)]
+pub enum sl_thd_property {
+    SL_THD_PROPERTY_OWN_TCAP = 1,
+    SL_THD_PROPERTY_SEND     = (1<<1),
+}
+
+#[repr(C)]
+#[derive(Clone, Debug)]
+#[allow(non_camel_case_types)]
+pub struct cos_aep_info {
+    tc:   tcap_t,
+    thd:  thdcap_t,
+    rcv:  arcvcap_t,
+    func: extern fn(rcv: arcvcap_t, param: c_void),
+    data: *mut c_void, 
+}
+
+
+#[repr(C)]
+#[derive(Clone, Debug)]
+#[allow(non_camel_case_types)]
 pub struct sl_thd {
-    pub state: sl_thd_state,
-    pub thdid: thdid_t,
-    thdcap: thdcap_t,
-    prio: tcap_prio_t,
+    pub state:  sl_thd_state,
+    properties: sl_thd_property,
+    pub thdid:  thdid_t,
+    aepinfo:    cos_aep_info,
+    sndcap:     asndcap_t,
+    prio:       tcap_prio_t,
     dependency: *mut sl_thd,
 
-    period: cycles_t,
-    periodic_cycs: cycles_t,
-    timeout_cycs: cycles_t,
-    wakeup_cycs: cycles_t,
-    timeout_idx: c_int
+    budget:         tcap_res_t,
+    last_replenish: cycles_t,
+    period:         cycles_t,
+    periodic_cycs:  cycles_t,
+    timeout_cycs:   cycles_t,
+    wakeup_cycs:    cycles_t,
+    timeout_idx:    c_int
 }
 
 #[allow(non_camel_case_types)]
@@ -63,6 +87,9 @@ pub type sched_param_t = u32;
 extern {
     pub fn sched_param_pack_rs(param_type: sched_param_type_t, value: c_uint) -> sched_param_t;
     pub fn sl_thd_curr_rs() -> *mut sl_thd;
+    pub fn sl_thd_lkup_rs(tid: thdid_t) -> *mut sl_thd;
+    pub fn sl_thdid_rs() -> thdid_t;
+
 
     pub fn sl_cyc2usec_rs(cyc: cycles_t) -> microsec_t;
     pub fn sl_usec2cyc_rs(usec: microsec_t) -> cycles_t;
@@ -97,4 +124,3 @@ extern {
 
     pub fn sl_thd_yield(tid: thdid_t);
 }
-

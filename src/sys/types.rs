@@ -12,8 +12,10 @@ pub type thdid_t = c_ushort;
 pub type vaddr_t = c_ulong;
 
 // Capability types
+pub type tcap_res_t = c_ulong;
 pub type capid_t = c_ulong;
 pub type tcap_t = capid_t;
 pub type thdcap_t = capid_t;
 pub type arcvcap_t = capid_t;
 pub type pgtblcap_t = capid_t;
+pub type asndcap_t = capid_t;

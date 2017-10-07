@@ -1,7 +1,5 @@
 // We kinda need to run on nightly to make xargo work
 // However, it would be nice to avoid having to depend on unstable features
-// TODO: Investigate the stabilization of "shared"
-#![feature(shared)]
 // TODO: Investigate switching to marker types
 #![feature(optin_builtin_traits)]
 // TODO: Remove uses of FnBox once Box<FnOnce()> just works

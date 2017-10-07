@@ -1,6 +1,5 @@
 use std::boxed::FnBox;
 use std::mem;
-use std::ptr::Shared;
 use std::time::Duration;
 
 use libc::c_void;
@@ -22,7 +21,7 @@ impl !Sync for Sl{}
 
 #[derive(Clone)]
 pub struct Thread {
-    thd_ptr: Shared<sl::sl_thd>
+    thread_id: types::thdid_t,
 }
 
 impl PartialEq<Self> for Thread {
@@ -87,9 +86,9 @@ impl Sl {
 
     pub fn current_thread(&self) -> Thread {
         Thread {
-            thd_ptr: Shared::new(unsafe {
-                sl::sl_thd_curr_rs()
-            }).unwrap()
+            thread_id: unsafe {
+                sl::sl_thdid_rs()
+            }
         }
     }
 
@@ -102,7 +101,7 @@ impl Sl {
             let thd_ptr = sl::sl_thd_alloc(closure_spawn_wrapper, Box::into_raw(boxed_fn) as *mut c_void);
             assign_thread_data(thd_ptr);
             Thread {
-                thd_ptr: Shared::new(thd_ptr).unwrap()
+                thread_id: (*thd_ptr).thdid,
             }
         }
     }
@@ -111,7 +110,7 @@ impl Sl {
 impl Thread {
     pub fn set_param(&mut self, param: ThreadParameter) {
         unsafe {
-            sl::sl_thd_param_set(self.thd_ptr.as_ptr(), param.to_u32())
+            sl::sl_thd_param_set(sl::sl_thd_lkup_rs(self.thread_id), param.to_u32())
         }
     }
 
@@ -122,9 +121,7 @@ impl Thread {
     }
 
     pub fn thdid(&self) -> types::thdid_t {
-        unsafe {
-            (*self.thd_ptr.as_ptr()).thdid
-        }
+        self.thread_id
     }
 }
 
