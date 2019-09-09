@@ -38,14 +38,14 @@ pub enum ThreadParameter {
 }
 
 impl Sl {
-    pub fn start_scheduler_loop(d: DefKernelAPI, root_thread_priority: u32, entrypoint: Box<dyn FnOnce(Sl)>) {
+    pub fn start_scheduler_loop<F: FnOnce(Sl)>(d: DefKernelAPI, root_thread_priority: u32, entrypoint: F) {
         unsafe {
             sl::sl_init();
         }
         Self::start_scheduler_loop_without_initializing(d, root_thread_priority, entrypoint);
     }
 
-    pub fn start_scheduler_loop_without_initializing(_: DefKernelAPI, root_thread_priority: u32, entrypoint: Box<dyn FnOnce(Sl)>) {
+    pub fn start_scheduler_loop_without_initializing<F: FnOnce(Sl)>(_: DefKernelAPI, root_thread_priority: u32, entrypoint: F) {
         let mut root_thread = Sl.spawn(entrypoint);
         root_thread.set_param(ThreadParameter::Priority(root_thread_priority));
 
@@ -91,7 +91,7 @@ impl Sl {
         }
     }
 
-    pub fn spawn(&self, entrypoint: Box<dyn FnOnce(Sl)>) -> Thread {
+    pub fn spawn<F: FnOnce(Sl)>(&self, entrypoint: F) -> Thread {
         let boxed_fn = Box::new(FnBoxWrapper {
             inner: Box::new(entrypoint)
         });
