@@ -1,4 +1,3 @@
-use std::boxed::FnBox;
 use std::mem;
 use std::time::Duration;
 
@@ -39,14 +38,14 @@ pub enum ThreadParameter {
 }
 
 impl Sl {
-    pub fn start_scheduler_loop<F: FnBox(Sl)>(d: DefKernelAPI, root_thread_priority: u32, entrypoint: F) {
+    pub fn start_scheduler_loop(d: DefKernelAPI, root_thread_priority: u32, entrypoint: Box<dyn FnOnce(Sl)>) {
         unsafe {
             sl::sl_init();
         }
         Self::start_scheduler_loop_without_initializing(d, root_thread_priority, entrypoint);
     }
 
-    pub fn start_scheduler_loop_without_initializing<F: FnBox(Sl)>(_: DefKernelAPI, root_thread_priority: u32, entrypoint: F) {
+    pub fn start_scheduler_loop_without_initializing(_: DefKernelAPI, root_thread_priority: u32, entrypoint: Box<dyn FnOnce(Sl)>) {
         let mut root_thread = Sl.spawn(entrypoint);
         root_thread.set_param(ThreadParameter::Priority(root_thread_priority));
 
@@ -92,7 +91,7 @@ impl Sl {
         }
     }
 
-    pub fn spawn<F: FnBox(Sl)>(&self, entrypoint: F) -> Thread {
+    pub fn spawn(&self, entrypoint: Box<dyn FnOnce(Sl)>) -> Thread {
         let boxed_fn = Box::new(FnBoxWrapper {
             inner: Box::new(entrypoint)
         });
@@ -137,11 +136,11 @@ impl ThreadParameter {
 
 // Unsafe magic to support spawning a closure as a new thread
 
-// It would be nice to just use a Box<FnBox(Sl)>, and just pass *mut FnBox(Sl) to the thread
-// But we can't do that, because 'FnBox(Sl)' is a trait, and thus *mut FnBox(Sl) is a double wide
+// It would be nice to just use a Box<Fn(Sl)>, and just pass *mut Fn(Sl) to the thread
+// But we can't do that, because 'Fn(Sl)' is a trait, and thus *mut Fn(Sl) is a double wide
 // fat pointer. Therefore we have to use this wrapper, so we can use a thin pointer
 struct FnBoxWrapper<'a>{
-    inner: Box<FnBox(Sl) + 'a>
+    inner: Box<dyn FnOnce(Sl) + 'a>
 }
 
 extern fn closure_spawn_wrapper(ptr: *mut c_void) {
@@ -153,7 +152,7 @@ extern fn closure_spawn_wrapper(ptr: *mut c_void) {
         // Once we get the wrapper ptr, we need to re-box it so we don't leak memory
         Box::from_raw(wrapper_ptr)
     };
-    let inner_box: Box<FnBox(Sl)> = boxed_wrapper.inner;
+    let inner_box: Box<dyn FnOnce(Sl)> = boxed_wrapper.inner;
     inner_box(Sl);
 
     // When the inner closure returns, the thread is done executing, so we can free it

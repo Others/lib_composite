@@ -2,8 +2,6 @@
 // However, it would be nice to avoid having to depend on unstable features
 // TODO: Investigate switching to marker types
 #![feature(optin_builtin_traits)]
-// TODO: Remove uses of FnBox once Box<FnOnce()> just works
-#![feature(fnbox)]
 
 extern crate libc;
 
