@@ -1,6 +1,6 @@
 use libc::{c_int, c_uint, c_void};
 
-use super::types::{cycles_t, microsec_t, tcap_prio_t, thdcap_t, thdid_t, tcap_t, asndcap_t, arcvcap_t, tcap_res_t};
+use super::types::*;
 
 #[repr(C)]
 #[derive(Clone, Debug)]
@@ -30,29 +30,38 @@ pub struct cos_aep_info {
     thd:  thdcap_t,
     rcv:  arcvcap_t,
     func: extern fn(rcv: arcvcap_t, param: c_void),
-    data: *mut c_void, 
+    data: *mut c_void,
 }
-
 
 #[repr(C)]
 #[derive(Clone, Debug)]
 #[allow(non_camel_case_types)]
+pub struct event_info {
+    blocked: c_int,
+    cycles: cycles_t,
+    timeout: tcap_time_t,
+}
+
+#[repr(C)]
+#[derive(Clone, Debug)]
+#[allow(non_camel_case_types, non_snake_case)]
 pub struct sl_thd {
     pub state:  sl_thd_state,
+    rcv_suspended: c_int,
     properties: sl_thd_property,
-    pub thdid:  thdid_t,
     aepinfo:    cos_aep_info,
     sndcap:     asndcap_t,
     prio:       tcap_prio_t,
     dependency: *mut sl_thd,
-
     budget:         tcap_res_t,
     last_replenish: cycles_t,
     period:         cycles_t,
     periodic_cycs:  cycles_t,
     timeout_cycs:   cycles_t,
     wakeup_cycs:    cycles_t,
-    timeout_idx:    c_int
+    timeout_idx:    c_int,
+    event_info: event_info,
+    SL_THD_EVENT_LIST: ps_list,
 }
 
 #[allow(non_camel_case_types)]
@@ -88,6 +97,7 @@ extern {
     pub fn sched_param_pack_rs(param_type: sched_param_type_t, value: c_uint) -> sched_param_t;
     pub fn sl_thd_curr_rs() -> *mut sl_thd;
     pub fn sl_thd_lkup_rs(tid: thdid_t) -> *mut sl_thd;
+    pub fn sl_thd_thdid_rs(sl_thd: *mut sl_thd) -> thdid_t;
     pub fn sl_thdid_rs() -> thdid_t;
 
 

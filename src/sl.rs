@@ -100,7 +100,7 @@ impl Sl {
             let thd_ptr = sl::sl_thd_alloc(closure_spawn_wrapper, Box::into_raw(boxed_fn) as *mut c_void);
             assign_thread_data(thd_ptr);
             Thread {
-                thread_id: (*thd_ptr).thdid,
+                thread_id: sl::sl_thd_thdid_rs(thd_ptr),
             }
         }
     }
